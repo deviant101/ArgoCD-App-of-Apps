@@ -125,7 +125,6 @@ jobs:
         push: true
         tags: |
           ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-${{ steps.image-tag.outputs.tag }}
-          ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-${{ steps.image-tag.outputs.tag_latest }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
