@@ -35,11 +35,9 @@ jobs:
     - name: Detect changes
       id: changes
       run: |
-        # Determine comparison base
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           BASE="origin/main...HEAD"
         else
-          # For push and workflow_dispatch, compare against previous commit
           BASE="HEAD~1..HEAD"
         fi
         
@@ -69,6 +67,7 @@ jobs:
   build-and-push:
     needs: detect-changes
     runs-on: ubuntu-latest
+    if: ${{ matrix.should-run }}
     strategy:
       matrix:
         include:
@@ -86,10 +85,8 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
-      if: matrix.should-run == 'true'
 
     - name: Set Docker image tag
-      if: matrix.should-run == 'true'
       id: image-tag
       run: |
         BRANCH_NAME="${GITHUB_REF#refs/heads/}"
@@ -101,7 +98,6 @@ jobs:
         echo "Building image: ${{ matrix.app-name }}:${TAG}"
 
     - name: Configure AWS credentials
-      if: matrix.should-run == 'true'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -109,12 +105,10 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
-      if: matrix.should-run == 'true'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build and push Docker image to ECR
-      if: matrix.should-run == 'true'
       uses: docker/build-push-action@v5
       with:
         context: ${{ matrix.dockerfile-path }}
@@ -126,7 +120,6 @@ jobs:
         cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-buildcache,mode=max
 
     - name: Image scan with Trivy
-      if: matrix.should-run == 'true'
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-${{ steps.image-tag.outputs.tag }}
@@ -134,20 +127,16 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy results to GitHub Security tab
-      if: matrix.should-run == 'true'
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: 'trivy-results.sarif'
         category: 'trivy-${{ matrix.app-name }}'
 
     - name: Update Kubernetes manifest
-      if: matrix.should-run == 'true'
       run: |
-        # Update deployment.yaml with new image
         sed -i "s|image: \"589736534170.dkr.ecr.us-east-1.amazonaws.com/app-of-apps:${{ matrix.app-name }}-.*\"|image: \"${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-${{ steps.image-tag.outputs.tag }}\"|g" k8s/${{ matrix.app-name }}/deployment.yaml
 
     - name: Commit manifest updates
-      if: matrix.should-run == 'true'
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
@@ -158,7 +147,6 @@ jobs:
           git commit -m "chore: update ${{ matrix.app-name }} image to ${{ steps.image-tag.outputs.tag }}"
           git push
         fi
-
   # deploy-with-argocd:
   #   needs: build-and-push
   #   runs-on: ubuntu-latest
