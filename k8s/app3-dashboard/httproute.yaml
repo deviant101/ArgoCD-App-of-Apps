@@ -1,0 +1,25 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app3-dashboard-route
+  namespace: app3-dashboard
+  labels:
+    app: app3-dashboard
+spec:
+  parentRefs:
+  - name: cilium-gateway
+    namespace: demo-gateway
+    sectionName: https
+  hostnames:
+  - "dashboard.rancher.live"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: app3-dashboard
+      namespace: app3-dashboard
+      port: 80
+      weight: 100
+    timeout: 30s

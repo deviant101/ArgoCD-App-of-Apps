@@ -96,7 +96,6 @@ jobs:
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
         TAG="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
         echo "tag=${TAG}" >> $GITHUB_OUTPUT
-        echo "tag_latest=${BRANCH_NAME}-latest" >> $GITHUB_OUTPUT
         echo "Building image: ${{ matrix.app-name }}:${TAG}"
 
     - name: Configure AWS credentials
