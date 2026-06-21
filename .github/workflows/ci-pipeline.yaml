@@ -82,6 +82,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      security-events: write
     steps:
     - uses: actions/checkout@v4
       if: ${{ matrix.should-run }}
@@ -138,7 +139,7 @@ jobs:
 
     - name: Upload Trivy results to GitHub Security tab
       if: ${{ matrix.should-run }}
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
         category: 'trivy-${{ matrix.app-name }}'
