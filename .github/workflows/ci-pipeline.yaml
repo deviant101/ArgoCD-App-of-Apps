@@ -50,6 +50,8 @@ jobs:
 
         if echo "$CHANGED_FILES" | grep -q '^apps/app1-frontend/'; then
           echo "app1_frontend=true" >> $GITHUB_OUTPUT
+          echo "here"
+          echo $app1_frontend
         else
           echo "app1_frontend=false" >> $GITHUB_OUTPUT
         fi
