@@ -81,7 +81,7 @@ jobs:
             should-run: ${{ needs.detect-changes.outputs.app3-dashboard == 'true' || github.event_name == 'workflow_dispatch' }}
     permissions:
       id-token: write
-      contents: read
+      contents: write
       security-events: write
     steps:
     - uses: actions/checkout@v4
