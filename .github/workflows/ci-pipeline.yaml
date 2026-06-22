@@ -81,7 +81,7 @@ jobs:
             should-run: ${{ needs.detect-changes.outputs.app3-dashboard == 'true' || github.event_name == 'workflow_dispatch' }}
     permissions:
       id-token: write
-      contents: write
+      contents: read
       security-events: write
     steps:
     - uses: actions/checkout@v4
@@ -147,19 +147,52 @@ jobs:
       run: |
         sed -i "s|image: \"589736534170.dkr.ecr.us-east-1.amazonaws.com/app-of-apps:${{ matrix.app-name }}-.*\"|image: \"${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.app-name }}-${{ steps.image-tag.outputs.tag }}\"|g" k8s/${{ matrix.app-name }}/deployment.yaml
 
-    - name: Commit manifest updates
+    - name: Upload modified manifest
       if: ${{ matrix.should-run }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.app-name }}-manifest
+        path: k8s/${{ matrix.app-name }}/deployment.yaml
+        retention-days: 1
+
+  commit-manifests:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all modified manifests
+      uses: actions/download-artifact@v4
+      with:
+        path: k8s/
+        merge-multiple: false
+
+    - name: Move artifacts to correct paths
+      run: |
+        for dir in k8s/*/; do
+          app_name=$(basename "$dir")
+          if [ -f "k8s/${app_name}/deployment.yaml" ]; then
+            echo "Found manifest for ${app_name}"
+          fi
+        done
+
+    - name: Commit all manifest updates
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
-        git add k8s/${{ matrix.app-name }}/
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+        
+        git add k8s/
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "chore: update ${{ matrix.app-name }} image to ${{ steps.image-tag.outputs.tag }}"
+          git commit -m "chore: update manifests"
           git push
         fi
-
   # deploy-with-argocd:
   #   needs: build-and-push
   #   runs-on: ubuntu-latest
