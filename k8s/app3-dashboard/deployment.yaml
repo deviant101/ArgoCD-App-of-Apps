@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: app3-dashboard
-        image: "589736534170.dkr.ecr.us-east-1.amazonaws.com/app-of-apps:app3-dashboard-main-4d8a68f-20260622091724"
+        image: "589736534170.dkr.ecr.us-east-1.amazonaws.com/app-of-apps:app3-dashboard-main-426f48e-20260622115153"
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
