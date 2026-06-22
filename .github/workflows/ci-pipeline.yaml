@@ -166,16 +166,20 @@ jobs:
     - name: Download all modified manifests
       uses: actions/download-artifact@v4
       with:
-        path: k8s/
+        path: downloaded-artifacts
         merge-multiple: false
 
-    - name: Move artifacts to correct paths
+    - name: Place manifests in correct paths
       run: |
-        for dir in k8s/*/; do
-          app_name=$(basename "$dir")
-          if [ -f "k8s/${app_name}/deployment.yaml" ]; then
-            echo "Found manifest for ${app_name}"
-          fi
+        # Artifacts are downloaded as downloaded-artifacts/<artifact-name>/deployment.yaml
+        # We need to move them to k8s/<app-name>/deployment.yaml
+        for artifact_dir in downloaded-artifacts/*-manifest/; do
+          # Extract app name by removing "-manifest" suffix
+          artifact_name=$(basename "$artifact_dir")
+          app_name="${artifact_name%-manifest}"
+          
+          echo "Moving ${artifact_dir}deployment.yaml -> k8s/${app_name}/deployment.yaml"
+          cp "${artifact_dir}deployment.yaml" "k8s/${app_name}/deployment.yaml"
         done
 
     - name: Commit all manifest updates
