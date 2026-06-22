@@ -22,4 +22,3 @@ spec:
       namespace: app2-api-gateway
       port: 80
       weight: 100
-    timeout: 30s

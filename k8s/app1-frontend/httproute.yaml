@@ -22,4 +22,3 @@ spec:
       namespace: app1-frontend
       port: 80
       weight: 100
-    timeout: 30s
