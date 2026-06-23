@@ -158,6 +158,7 @@ jobs:
   commit-manifests:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.app1-frontend == 'true' || needs.detect-changes.outputs.app2-api-gateway == 'true' || needs.detect-changes.outputs.app3-dashboard == 'true' }}
     permissions:
       contents: write
     steps:
@@ -171,9 +172,18 @@ jobs:
 
     - name: Place manifests in correct paths
       run: |
+        # Check if any artifacts were downloaded
+        if [ ! -d "downloaded-artifacts" ] || [ -z "$(ls -A downloaded-artifacts 2>/dev/null)" ]; then
+          echo "No artifacts to process - skipping manifest placement"
+          exit 0
+        fi
+
         # Artifacts are downloaded as downloaded-artifacts/<artifact-name>/deployment.yaml
         # We need to move them to k8s/<app-name>/deployment.yaml
         for artifact_dir in downloaded-artifacts/*-manifest/; do
+          # Skip if glob doesn't match (directory doesn't exist)
+          [ -d "$artifact_dir" ] || continue
+          
           # Extract app name by removing "-manifest" suffix
           artifact_name=$(basename "$artifact_dir")
           app_name="${artifact_name%-manifest}"
