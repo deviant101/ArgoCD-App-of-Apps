@@ -235,32 +235,3 @@ jobs:
   #         echo "Status of $app:"
   #         argocd app get $app
   #       done
-
-  # notify:
-  #   needs: [build-and-push]
-  #   runs-on: ubuntu-latest
-  #   if: always()
-  #   steps:
-  #   - name: Deployment notification
-  #     run: |
-  #       echo "::notice::Build and push pipeline completed!"
-  #       echo "Images pushed to ECR: 589736534170.dkr.ecr.us-east-1.amazonaws.com/app-of-apps"
-
-  # security-checks:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-
-  #   - name: Run Trivy vulnerability scanner on repo
-  #     uses: aquasecurity/trivy-action@master
-  #     with:
-  #       scan-type: 'fs'
-  #       scan-ref: '.'
-  #       format: 'sarif'
-  #       output: 'trivy-repo-results.sarif'
-
-  #   - name: Upload Trivy repo results
-  #     uses: github/codeql-action/upload-sarif@v2
-  #     with:
-  #       sarif_file: 'trivy-repo-results.sarif'
-  #       category: 'trivy-repo'
